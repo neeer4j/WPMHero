@@ -31,9 +31,10 @@ const Stat = ({ label, value, highlight }: { label: string; value: string; highl
 type TypingWorkspaceProps = {
   isAuthenticated: boolean;
   userEmail?: string | null;
+  onExit?: () => void;
 };
 
-export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceProps) => {
+export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWorkspaceProps) => {
   const {
     text,
     caretIndex,
@@ -80,6 +81,11 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "Escape" && onExit) {
+        event.preventDefault();
+        onExit();
+        return;
+      }
       if (!filterKey(event.key)) return;
 
       const target = event.target as HTMLElement | null;
@@ -118,7 +124,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [challengeChars, complete, flattenedText, caretIndex, registerKeypress, started, start, completed]);
+  }, [challengeChars, complete, flattenedText, caretIndex, registerKeypress, started, start, completed, onExit]);
 
   const submitResult = useCallback(async () => {
     try {
