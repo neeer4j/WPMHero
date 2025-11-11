@@ -1,21 +1,24 @@
 import Link from "next/link";
 
-import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function SignInPage() {
-  const session = await auth();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-xl flex-col justify-center gap-8 px-6 py-16">
       <Card>
         <CardHeader>
           <CardTitle>Sign in to Velocity</CardTitle>
-          <CardDescription>Magic link authentication powered by Resend.</CardDescription>
+          <CardDescription>Magic link authentication powered by Supabase.</CardDescription>
         </CardHeader>
         <CardContent>
           {session ? (

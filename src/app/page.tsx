@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 
-import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { TypingWorkspace } from "@/modules/typing/components/typing-workspace";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const features = [
   {
@@ -108,7 +108,10 @@ const LeaderboardPreview = async () => {
 };
 
 export default async function Home() {
-  const session = await auth();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-12">
@@ -122,7 +125,7 @@ export default async function Home() {
           </h1>
           <p className="text-lg text-muted-foreground">
             Velocity delivers a desktop-first experience inspired by Monkeytype — rebuilt with Next.js 14,
-            Supabase, Redis, and Resend. Laser-focused, distraction-free, and customizable down to the accent
+            Supabase Auth, Redis, and serverless analytics. Laser-focused, distraction-free, and customizable down to the accent
             color.
           </p>
           <div className="flex flex-wrap items-center gap-3">
@@ -162,7 +165,7 @@ export default async function Home() {
         <Card>
           <CardHeader>
             <CardTitle>Secure email sign-in</CardTitle>
-            <CardDescription>Resend delivers passwordless magic links with grace.</CardDescription>
+            <CardDescription>Supabase Auth handles passwordless magic links out of the box.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>Authenticate once, keep your stats in sync across devices.</p>

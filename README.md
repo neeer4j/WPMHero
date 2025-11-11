@@ -6,7 +6,7 @@ Velocity is a Monkeytype-inspired typing trainer focused on desktop workflows, d
 
 - Next.js 14 App Router + TypeScript + Tailwind v4 + shadcn/ui
 - Prisma ORM with Supabase (Postgres) and Vercel deployment target
-- NextAuth email magic links powered by Resend
+- Supabase Auth magic links (no third-party email provider required)
 - Upstash Redis for rate limiting and live leaderboards
 - PostHog for analytics and product telemetry
 
@@ -25,7 +25,7 @@ Velocity is a Monkeytype-inspired typing trainer focused on desktop workflows, d
 	npm install
 	```
 
-2. Duplicate `.env.example` to `.env.local` and fill in environment values: Supabase URLs, Resend API key, NextAuth secret, Upstash Redis credentials, and PostHog keys (optional).
+2. Duplicate `.env.example` to `.env.local` and fill in environment values: Supabase URLs/keys, app URL, Upstash Redis credentials, and PostHog keys (optional).
 
 3. Generate the Prisma client and apply migrations once your Supabase instance is ready:
 
@@ -52,7 +52,7 @@ Velocity is a Monkeytype-inspired typing trainer focused on desktop workflows, d
 
 - Desktop-first typing workspace with minimal/playful themes and live accent switching
 - Real-time WPM, accuracy, and consistency charts powered by a Zustand typing engine
-- Secure passwordless authentication with Resend magic links
+- Secure passwordless authentication with Supabase magic links
 - Persistent history in Supabase with automatic user settings bootstrap
 - Redis-backed leaderboards and PostHog instrumentation hooks
 

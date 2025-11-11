@@ -1,21 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { env } from "@/lib/env";
+import { useSupabase } from "@/components/providers/supabase-provider";
 
 const emailRegex = /^[\w.!#$%&'*+/=?^_`{|}~-]+@[\w-]+(\.[\w-]+)+$/;
 
 export const SignInForm = ({ className }: { className?: string }) => {
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
+  const router = useRouter();
+  const { client } = useSupabase();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!emailRegex.test(email)) {
       toast.error("Enter a valid email address");
@@ -23,20 +27,25 @@ export const SignInForm = ({ className }: { className?: string }) => {
     }
 
     setPending(true);
-    const result = await signIn("email", {
+
+    const redirectHost = env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+    const { error } = await client.auth.signInWithOtp({
       email,
-      redirect: false,
-      callbackUrl: "/",
+      options: {
+        emailRedirectTo: `${redirectHost}/auth/callback`,
+      },
     });
+
     setPending(false);
 
-    if (result?.error) {
-      toast.error(result.error);
+    if (error) {
+      toast.error(error.message ?? "Unable to send magic link");
       return;
     }
 
-    toast.success("Magic link sent. Check your inbox.");
+    toast.success("Magic link sent. Check your inbox within 10 minutes.");
     setEmail("");
+    router.push("/verify-email");
   };
 
   return (

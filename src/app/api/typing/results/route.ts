@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 import { getPosthog } from "@/lib/posthog";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const payloadSchema = z.object({
   wpm: z.number().min(0),
@@ -42,7 +42,10 @@ const payloadSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const body = await request.json().catch(() => null);
 
   const parseResult = payloadSchema.safeParse(body);
@@ -58,6 +61,31 @@ export async function POST(request: Request) {
   const data = parseResult.data;
 
   const modeSlug = `standard-${data.duration}`;
+
+  const userMetadata = (session.user.user_metadata ?? {}) as { full_name?: string; name?: string };
+  const displayName = userMetadata.full_name ?? userMetadata.name ?? null;
+
+  await prisma.user.upsert({
+    where: { id: session.user.id },
+    update: {
+      email: session.user.email ?? undefined,
+      name: displayName ?? undefined,
+    },
+    create: {
+      id: session.user.id,
+      email: session.user.email,
+      name: displayName,
+    },
+  });
+
+  const hasSettings = await prisma.userSettings.findUnique({ where: { userId: session.user.id } });
+  if (!hasSettings) {
+    await prisma.userSettings.create({
+      data: {
+        userId: session.user.id,
+      },
+    });
+  }
 
   const mode = await prisma.typingMode.upsert({
     where: { slug: modeSlug },
