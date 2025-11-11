@@ -2,37 +2,63 @@ import { nanoid } from "nanoid";
 
 import type { KeypressSample, TypingSnapshot } from "@/modules/typing/types";
 
-const fallbackWords = [
-  "horizon",
-  "velocity",
-  "syntax",
-  "momentum",
-  "canvas",
-  "quantum",
-  "glyph",
-  "cascade",
-  "echo",
-  "neuron",
-  "catalyst",
-  "lattice",
-  "orbit",
-  "phoenix",
-  "vector",
-  "zenith",
+const standardSentences = [
+  "The quick brown fox jumps over the lazy dog.",
+  "Pack my box with five dozen liquor jugs.",
+  "Sphinx of black quartz judge my vow.",
+  "How vexingly quick daft zebras jump.",
+  "Bright vixens jump; dozy fowl quack.",
+  "Jived fox nymph grabs quick waltz.",
+  "Glib jocks quiz nymph to vex dwarf.",
+  "Waltz job vexed quick frog nymphs.",
+  "Two driven jocks help fax my big quiz.",
+  "Crazy Fredrick bought many very exquisite opal jewels.",
+  "Grumpy wizards make toxic brew for the evil queen and jack.",
+  "Jackdaws love my big sphinx of quartz.",
+  "The five boxing wizards jump quickly.",
+  "Quick zephyrs blow, vexing daft Jim.",
 ];
+
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const array = [...items];
+  for (let index = array.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [array[index], array[randomIndex]] = [array[randomIndex], array[index]];
+  }
+  return array;
+};
 
 export const makeChallengeId = () => nanoid(12);
 
 export const generateWordSequence = (length: number, source?: string[]): string[] => {
-  const words = source && source.length > 0 ? source : fallbackWords;
-  const sequence: string[] = [];
+  const sentencePool = (source && source.length > 0 ? source : standardSentences)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
 
-  for (let i = 0; i < length; i += 1) {
-    const index = Math.floor(Math.random() * words.length);
-    sequence.push(words[index]);
+  if (sentencePool.length === 0) {
+    return [];
   }
 
-  return sequence;
+  let orderedSentences = shuffleArray(sentencePool);
+  let sentenceIndex = 0;
+  const words: string[] = [];
+
+  while (words.length < length) {
+    if (sentenceIndex >= orderedSentences.length) {
+      orderedSentences = shuffleArray(sentencePool);
+      sentenceIndex = 0;
+    }
+
+    const sentence = orderedSentences[sentenceIndex];
+    sentenceIndex += 1;
+
+    const sentenceWords = sentence.split(/\s+/);
+    for (const word of sentenceWords) {
+      words.push(word);
+    }
+  }
+
+  return words;
 };
 
 type StatAccumulator = {

@@ -38,6 +38,8 @@ export type TypingSnapshot = {
 
 export type TypingTestState = {
   text: string[];
+  targetText: string;
+  inputs: Array<string | null>;
   caretIndex: number;
   wordIndex: number;
   started: boolean;
@@ -54,6 +56,8 @@ export type TypingTestState = {
   errors: number;
   correct: number;
   incorrect: number;
+  correctCharCount: number;
+  pendingErrors: number;
 };
 
 export type TypingTestActions = {
@@ -61,7 +65,8 @@ export type TypingTestActions = {
   setDuration: (seconds: number) => void;
   start: () => void;
   reset: () => void;
-  registerKeypress: (sample: KeypressSample) => void;
+  inputCharacter: (key: string, timestamp: number) => void;
+  backspace: () => void;
   complete: () => void;
   tick: () => void;
 };

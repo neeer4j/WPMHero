@@ -12,7 +12,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useSupabase } from "@/components/providers/supabase-provider";
 import { cn } from "@/lib/utils";
 import { useTypingStore } from "@/modules/typing/state";
-import { countTotalCharacters, formatSeconds, generateWordSequence } from "@/modules/typing/utils";
+import { formatSeconds, generateWordSequence } from "@/modules/typing/utils";
 
 const DURATION_PRESETS = [15, 30, 60, 120];
 const WORD_COUNT = 220;
@@ -42,6 +42,8 @@ type TypingWorkspaceProps = {
 export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, onSignOut }: TypingWorkspaceProps) => {
   const {
     text,
+    targetText,
+    inputs,
     caretIndex,
     started,
     completed,
@@ -57,17 +59,17 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
     incorrect,
     keypresses,
     snapshots,
+    pendingErrors,
     setText,
     setDuration,
     start,
     reset,
-    registerKeypress,
-    complete,
+    inputCharacter,
+    backspace,
     tick,
   } = useTypingStore();
 
-  const challengeChars = useMemo(() => countTotalCharacters(text), [text]);
-  const flattenedText = useMemo(() => text.join(" "), [text]);
+  const challengeChars = targetText.length;
   const viewportRef = useRef<HTMLDivElement>(null);
   const caretRef = useRef<HTMLSpanElement>(null);
   const [resultOpen, setResultOpen] = useState(false);
@@ -109,36 +111,42 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
 
       event.preventDefault();
 
-      if (!started) {
-        start();
-      }
-
       if (completed) {
         return;
       }
 
       if (event.key === "Backspace") {
+        backspace();
         return;
       }
 
-      const expected = flattenedText.charAt(caretIndex) ?? "";
-      const received = event.key === "Enter" ? "\n" : event.key;
-      const correctKey = received === expected || (received === " " && expected === " ");
-
-      registerKeypress({
-        key: received,
-        correct: correctKey,
-        timestamp: Date.now(),
-      });
-
-      if (caretIndex + 1 >= challengeChars) {
-        complete();
+      if (pendingErrors > 0) {
+        // Strict accuracy: don't allow progress until mistakes are cleared.
+        return;
       }
+
+      let key = event.key;
+      if (key === "Enter") {
+        return;
+      }
+      if (key === "Spacebar") {
+        key = " ";
+      }
+
+      if (key.length !== 1) {
+        return;
+      }
+
+      if (!started) {
+        start();
+      }
+
+      inputCharacter(key, Date.now());
     };
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [challengeChars, complete, flattenedText, caretIndex, registerKeypress, started, start, completed, onExit, resultOpen]);
+  }, [backspace, completed, inputCharacter, onExit, pendingErrors, resultOpen, start, started]);
 
   useEffect(() => {
     if (!viewportRef.current || !caretRef.current) return;
@@ -150,14 +158,14 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
     const targetScroll = Math.max(0, caretOffset - buffer);
 
     viewport.scrollTo({ left: targetScroll, behavior: started ? "smooth" : "auto" });
-  }, [caretIndex, started]);
+  }, [caretIndex, completed, inputs, pendingErrors, started]);
 
   useEffect(() => {
     if (!viewportRef.current) return;
     if (!started) {
       viewportRef.current.scrollTo({ left: 0, behavior: "auto" });
     }
-  }, [started, flattenedText]);
+  }, [started, targetText]);
 
   const submitResult = useCallback(async () => {
     try {
@@ -207,27 +215,53 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
   }, [completed, keypresses.length, submitResult]);
 
   const highlightedText = useMemo(() => {
-    const caret = caretIndex;
-    return flattenedText.split("").map((char, index) => {
-      const isCompleted = index < caret;
-      const isCaret = index === caret;
+    if (!targetText) {
+      return [];
+    }
+
+    const characters = targetText.split("");
+    if (characters.length === 0) {
+      return [];
+    }
+
+    const firstErrorIndex = inputs.findIndex((value, index) => {
+      const targetChar = characters[index];
+      return value !== null && value !== targetChar;
+    });
+
+    const fallbackCaret = Math.min(caretIndex, Math.max(characters.length - 1, 0));
+    const caretPosition = !completed && characters.length > 0
+      ? firstErrorIndex >= 0
+        ? firstErrorIndex
+        : fallbackCaret
+      : -1;
+
+    return characters.map((char, index) => {
+      const inputValue = inputs[index] ?? null;
+      const isCorrect = inputValue !== null && inputValue === char;
+      const isIncorrect = inputValue !== null && inputValue !== char;
+      const isCaret = caretPosition === index;
+      const displayChar = inputValue !== null ? inputValue : char;
 
       return (
         <span
-          key={`${char}-${index}`}
+          key={`char-${index}`}
           ref={isCaret ? caretRef : undefined}
           className={cn(
             "inline-block px-[1px] transition-colors duration-75",
-            isCaret && "rounded-sm bg-foreground text-background",
-            isCompleted && "text-foreground/70",
-            !isCompleted && !isCaret && "text-muted-foreground",
+            isCaret && !isIncorrect && "rounded-sm bg-foreground text-background",
+            isCaret && isIncorrect && "rounded-sm bg-destructive/20 text-destructive",
+            isIncorrect && !isCaret && "text-destructive",
+            isCorrect && !isCaret && "text-foreground",
+            !isCorrect && !isIncorrect && !isCaret && "text-muted-foreground",
+            completed && !isCaret && "text-foreground/70",
           )}
         >
-          {char === " " ? "\u00A0" : char}
+          {displayChar === " " ? "\u00A0" : displayChar}
         </span>
       );
     });
-  }, [flattenedText, caretIndex]);
+  }, [caretIndex, completed, inputs, targetText]);
 
   const elapsed = formatSeconds(duration - remainingSeconds);
   const remaining = formatSeconds(remainingSeconds);
@@ -307,9 +341,12 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
-                <span className="hidden items-center gap-2 rounded-full border border-foreground/15 bg-background/70 px-4 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground sm:inline-flex">
+                <Link
+                  href="/profile"
+                  className="hidden items-center gap-2 rounded-full border border-foreground/15 bg-background/70 px-4 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground transition hover:border-foreground/40 hover:text-foreground sm:inline-flex"
+                >
                   {displayIdentity}
-                </span>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
