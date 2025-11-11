@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { TestResult } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +55,15 @@ const toNumber = (value: number | bigint | Prisma.Decimal | string | null | unde
   return Number(value);
 };
 
+const normalizeRun = (run: TestResult | null) => {
+  if (!run) return null;
+  return {
+    ...run,
+    accuracy: toNumber(run.accuracy),
+    consistency: toNumber(run.consistency),
+  };
+};
+
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -68,7 +78,7 @@ export default async function ProfilePage() {
   const userMetadata = (session.user.user_metadata ?? {}) as { full_name?: string; name?: string };
   const displayName = userMetadata.full_name ?? userMetadata.name ?? session.user.email ?? "You";
 
-  const [aggregate, recentResults, durationBreakdown, bestRun, worstRun, userRecord] = await Promise.all([
+  const [aggregate, recentResults, durationBreakdown, bestRunRaw, worstRunRaw, userRecord] = await Promise.all([
     prisma.testResult.aggregate({
       where: { userId },
       _count: { _all: true },
@@ -115,6 +125,9 @@ export default async function ProfilePage() {
   const worstWpm = toNumber(aggregate._min.wpm);
   const totalCharacters = toNumber(aggregate._sum.charactersTyped);
   const totalDurationSeconds = toNumber(aggregate._sum.durationSeconds);
+
+  const normalizedBestRun = normalizeRun(bestRunRaw);
+  const normalizedWorstRun = normalizeRun(worstRunRaw);
 
   const recentSample = recentResults.slice(0, 5);
   const recentAverage = recentSample.length
@@ -204,11 +217,11 @@ export default async function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p className="text-3xl font-semibold text-foreground">{formatInteger(bestWpm)} WPM</p>
-                {bestRun ? (
+                {normalizedBestRun ? (
                   <ul className="space-y-1 text-xs uppercase tracking-[0.3em]">
-                    <li>Duration · {bestRun.durationSeconds}s</li>
-                    <li>Accuracy · {formatPercent(bestRun.accuracy)}</li>
-                    <li>Logged · {formatDateTime(bestRun.createdAt)}</li>
+                    <li>Duration · {normalizedBestRun.durationSeconds}s</li>
+                    <li>Accuracy · {formatPercent(normalizedBestRun.accuracy)}</li>
+                    <li>Logged · {formatDateTime(normalizedBestRun.createdAt)}</li>
                   </ul>
                 ) : (
                   <p>No runs available.</p>
@@ -240,7 +253,7 @@ export default async function ProfilePage() {
                 <p className="text-3xl font-semibold text-foreground">{formatElapsed(totalDurationSeconds)}</p>
                 <ul className="space-y-1 text-xs uppercase tracking-[0.3em]">
                   <li>Lowest recorded run · {formatInteger(worstWpm)} WPM</li>
-                  {worstRun ? <li>Logged · {formatDateTime(worstRun.createdAt)}</li> : null}
+                  {normalizedWorstRun ? <li>Logged · {formatDateTime(normalizedWorstRun.createdAt)}</li> : null}
                   <li>Lifetime accuracy · {formatPercent(avgAccuracy)}</li>
                   <li>Lifetime consistency · {formatDecimal(avgConsistency)}</li>
                 </ul>
@@ -267,16 +280,21 @@ export default async function ProfilePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentResults.map((result) => (
-                      <tr key={result.id} className="border-t border-foreground/10 text-[0.65rem]">
-                        <td className="px-3 py-2 text-foreground">{formatDateTime(result.createdAt)}</td>
-                        <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.wpm)}</td>
-                        <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.rawWpm)}</td>
-                        <td className="px-3 py-2 text-right text-foreground">{formatPercent(result.accuracy)}</td>
-                        <td className="px-3 py-2 text-right text-foreground">{formatDecimal(result.consistency)}</td>
-                        <td className="px-3 py-2 text-right text-foreground">{result.durationSeconds}s</td>
-                      </tr>
-                    ))}
+                    {recentResults.map((result) => {
+                      const accuracyValue = toNumber(result.accuracy);
+                      const consistencyValue = toNumber(result.consistency);
+
+                      return (
+                        <tr key={result.id} className="border-t border-foreground/10 text-[0.65rem]">
+                          <td className="px-3 py-2 text-foreground">{formatDateTime(result.createdAt)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.wpm)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.rawWpm)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatPercent(accuracyValue)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatDecimal(consistencyValue)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{result.durationSeconds}s</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </CardContent>
