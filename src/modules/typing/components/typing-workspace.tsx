@@ -281,7 +281,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
   }, [client, duration, onSignOut, reset, router, setDuration]);
 
   return (
-    <div className="flex min-h-dvh flex-col items-center bg-background">
+    <div className="flex min-h-dvh w-full flex-col items-center overflow-hidden bg-background">
       <header className="w-full max-w-5xl px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-[2.5rem] border border-foreground/15 bg-card/70 px-6 py-4 text-sm shadow-xl backdrop-blur">
           <div className="flex flex-wrap items-center gap-4">
@@ -374,7 +374,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
         </div>
       </header>
 
-      <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-6 py-4">
+  <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 overflow-hidden px-6 py-4">
         <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-6 py-7 shadow-xl backdrop-blur">
           <div
             ref={viewportRef}
