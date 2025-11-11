@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BarChart3, RefreshCw, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
   const flattenedText = useMemo(() => text.join(" "), [text]);
   const viewportRef = useRef<HTMLDivElement>(null);
   const caretRef = useRef<HTMLSpanElement>(null);
+  const [resultOpen, setResultOpen] = useState(false);
 
   useEffect(() => {
     if (text.length === 0) {
@@ -84,6 +85,10 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (resultOpen) {
+        event.preventDefault();
+        return;
+      }
       if (event.key === "Escape" && onExit) {
         event.preventDefault();
         onExit();
@@ -127,7 +132,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [challengeChars, complete, flattenedText, caretIndex, registerKeypress, started, start, completed, onExit]);
+  }, [challengeChars, complete, flattenedText, caretIndex, registerKeypress, started, start, completed, onExit, resultOpen]);
 
   useEffect(() => {
     if (!viewportRef.current || !caretRef.current) return;
@@ -220,6 +225,39 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
 
   const elapsed = formatSeconds(duration - remainingSeconds);
   const remaining = formatSeconds(remainingSeconds);
+  const hasCorrect = correct > 0;
+  const displayWpm = hasCorrect ? Math.round(wpm) : 0;
+  const displayRawWpm = hasCorrect ? Math.round(rawWpm) : 0;
+
+  useEffect(() => {
+    if (!completed) return;
+    queueMicrotask(() => {
+      setResultOpen(true);
+    });
+  }, [completed]);
+
+  const handleResultConfirm = useCallback(() => {
+    const currentDuration = duration;
+    setResultOpen(false);
+    reset();
+    setDuration(currentDuration);
+    setText(generateWordSequence(WORD_COUNT));
+  }, [duration, reset, setDuration, setText]);
+
+  const handleReset = useCallback(() => {
+    const currentDuration = duration;
+    setResultOpen(false);
+    reset();
+    setDuration(currentDuration);
+  }, [duration, reset, setDuration]);
+
+  const handleShuffle = useCallback(() => {
+    const currentDuration = duration;
+    setResultOpen(false);
+    reset();
+    setDuration(currentDuration);
+    setText(generateWordSequence(WORD_COUNT));
+  }, [duration, reset, setDuration, setText]);
 
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background">
@@ -287,7 +325,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
               variant="ghost"
               size="icon"
               className="rounded-full border border-foreground/10 bg-background/70"
-              onClick={() => reset()}
+              onClick={handleReset}
               aria-label="Reset session"
             >
               <RotateCcw className="h-4 w-4" />
@@ -296,7 +334,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
               variant="ghost"
               size="icon"
               className="rounded-full border border-foreground/10 bg-background/70"
-              onClick={() => setText(generateWordSequence(WORD_COUNT))}
+              onClick={handleShuffle}
               aria-label="Shuffle words"
             >
               <RefreshCw className="h-4 w-4" />
@@ -319,7 +357,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
 
         <div className="flex w-full max-w-4xl flex-col items-center gap-1 text-center">
           <span className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">Current WPM</span>
-          <span className="font-arcade text-4xl text-foreground sm:text-5xl">{Math.round(wpm)}</span>
+          <span className="font-arcade text-4xl text-foreground sm:text-5xl">{displayWpm}</span>
         </div>
 
         <div className="flex w-full flex-col items-center gap-5">
@@ -341,8 +379,8 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
           )}
 
           <div className="grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
-            <Stat label="WPM" value={wpm.toString()} highlight />
-            <Stat label="Raw Speed" value={rawWpm.toString()} />
+            <Stat label="WPM" value={displayWpm.toString()} highlight />
+            <Stat label="Raw Speed" value={displayRawWpm.toString()} />
             <Stat label="Accuracy" value={`${accuracy}%`} />
             <Stat label="Consistency" value={`${consistency}%`} />
             <Stat label="Errors" value={errors.toString()} />
@@ -356,6 +394,26 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
           )}
         </div>
       </main>
+
+      {resultOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-foreground/15 bg-card/90 p-6 text-center shadow-2xl">
+            <p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">Session complete</p>
+            <p className="mt-4 font-arcade text-5xl text-foreground">{displayWpm}</p>
+            <p className="mt-3 text-xs uppercase tracking-[0.28em] text-muted-foreground">
+              Final WPM · Accuracy {accuracy}% · Raw {displayRawWpm} · Consistency {consistency}%
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={handleResultConfirm}
+                className="rounded-full border border-foreground/30 bg-foreground px-6 py-2 text-[0.7rem] uppercase tracking-[0.3em] text-background transition hover:scale-[1.02]"
+              >
+                Ok
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
