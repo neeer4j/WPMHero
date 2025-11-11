@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Press_Start_2P } from "next/font/google";
 
 import { AppProviders } from "@/components/providers/app-providers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -13,6 +13,12 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const pressStart = Press_Start_2P({
+  variable: "--font-press-start",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -40,7 +46,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="bg-background text-foreground">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+  <body className={`${geistSans.variable} ${geistMono.variable} ${pressStart.variable} antialiased`}>
         <AppProviders session={session}>{children}</AppProviders>
       </body>
     </html>
