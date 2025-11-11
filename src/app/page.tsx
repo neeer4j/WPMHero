@@ -10,7 +10,11 @@ export default async function Home() {
     data: { session },
   } = await supabase.auth.getSession();
 
+  const userMetadata = (session?.user?.user_metadata ?? {}) as { full_name?: string; name?: string };
+  const displayName = userMetadata.full_name ?? userMetadata.name ?? null;
+  const userEmail = session?.user?.email ?? null;
+
   return (
-    <AppExperience isAuthenticated={Boolean(session)} userEmail={session?.user?.email ?? null} />
+    <AppExperience isAuthenticated={Boolean(session)} userEmail={userEmail} userName={displayName} />
   );
 }

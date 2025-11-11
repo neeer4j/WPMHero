@@ -15,13 +15,22 @@ const emailRegex = /^[\w.!#$%&'*+/=?^_`{|}~-]+@[\w-]+(\.[\w-]+)+$/;
 
 export const SignInForm = ({ className }: { className?: string }) => {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [pending, setPending] = useState(false);
   const router = useRouter();
   const { client } = useSupabase();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!emailRegex.test(email)) {
+    const trimmedEmail = email.trim();
+    const trimmedName = name.trim();
+
+    if (trimmedName.length < 2) {
+      toast.error("Please enter your name (at least 2 characters).");
+      return;
+    }
+
+    if (!emailRegex.test(trimmedEmail)) {
       toast.error("Enter a valid email address");
       return;
     }
@@ -30,9 +39,13 @@ export const SignInForm = ({ className }: { className?: string }) => {
 
     const redirectHost = env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
     const { error } = await client.auth.signInWithOtp({
-      email,
+      email: trimmedEmail,
       options: {
         emailRedirectTo: `${redirectHost}/auth/callback`,
+        data: {
+          full_name: trimmedName,
+          name: trimmedName,
+        },
       },
     });
 
@@ -45,11 +58,25 @@ export const SignInForm = ({ className }: { className?: string }) => {
 
     toast.success("Magic link sent. Check your inbox within 10 minutes.");
     setEmail("");
+    setName("");
     router.push("/verify-email");
   };
 
   return (
     <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          type="text"
+          placeholder="Jane Doe"
+          value={name}
+          disabled={pending}
+          onChange={(event) => setName(event.target.value)}
+          autoComplete="name"
+          required
+        />
+      </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input

@@ -125,10 +125,17 @@ const WelcomeScreen = ({ onBegin }: WelcomeScreenProps) => {
 type AppExperienceProps = {
   isAuthenticated: boolean;
   userEmail: string | null;
+  userName: string | null;
 };
 
-export const AppExperience = ({ isAuthenticated, userEmail }: AppExperienceProps) => {
+export const AppExperience = ({ isAuthenticated, userEmail, userName }: AppExperienceProps) => {
   const [stage, setStage] = useState<"welcome" | "typing">("welcome");
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      queueMicrotask(() => setStage("welcome"));
+    }
+  }, [isAuthenticated]);
 
   return stage === "welcome" ? (
     <WelcomeScreen onBegin={() => setStage("typing")} />
@@ -136,7 +143,9 @@ export const AppExperience = ({ isAuthenticated, userEmail }: AppExperienceProps
     <TypingWorkspace
       isAuthenticated={isAuthenticated}
       userEmail={userEmail}
+      userName={userName}
       onExit={() => setStage("welcome")}
+      onSignOut={() => setStage("welcome")}
     />
   );
 };

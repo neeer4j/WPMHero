@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BarChart3, RefreshCw, RotateCcw } from "lucide-react";
 
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useSupabase } from "@/components/providers/supabase-provider";
 import { cn } from "@/lib/utils";
 import { useTypingStore } from "@/modules/typing/state";
 import { countTotalCharacters, formatSeconds, generateWordSequence } from "@/modules/typing/utils";
@@ -32,10 +34,12 @@ const Stat = ({ label, value, highlight }: { label: string; value: string; highl
 type TypingWorkspaceProps = {
   isAuthenticated: boolean;
   userEmail?: string | null;
+  userName?: string | null;
   onExit?: () => void;
+  onSignOut?: () => void;
 };
 
-export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWorkspaceProps) => {
+export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, onSignOut }: TypingWorkspaceProps) => {
   const {
     text,
     caretIndex,
@@ -67,6 +71,8 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
   const viewportRef = useRef<HTMLDivElement>(null);
   const caretRef = useRef<HTMLSpanElement>(null);
   const [resultOpen, setResultOpen] = useState(false);
+  const { client } = useSupabase();
+  const router = useRouter();
 
   useEffect(() => {
     if (text.length === 0) {
@@ -228,6 +234,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
   const hasCorrect = correct > 0;
   const displayWpm = hasCorrect ? Math.round(wpm) : 0;
   const displayRawWpm = hasCorrect ? Math.round(rawWpm) : 0;
+  const displayIdentity = userName?.trim() ? userName : userEmail ?? "Signed in";
 
   useEffect(() => {
     if (!completed) return;
@@ -259,6 +266,20 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
     setText(generateWordSequence(WORD_COUNT));
   }, [duration, reset, setDuration, setText]);
 
+  const handleSignOut = useCallback(async () => {
+    try {
+      await client.auth.signOut();
+      setResultOpen(false);
+      const currentDuration = duration;
+      reset();
+      setDuration(currentDuration);
+      onSignOut?.();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to sign out", error);
+    }
+  }, [client, duration, onSignOut, reset, router, setDuration]);
+
   return (
     <div className="flex min-h-dvh flex-col items-center bg-background">
       <header className="w-full max-w-5xl px-6 py-4">
@@ -285,8 +306,18 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
           </div>
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
-              <div className="hidden items-center gap-2 rounded-full border border-foreground/15 bg-background/70 px-4 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground sm:flex">
-                <span>{userEmail ?? "Signed in"}</span>
+              <div className="flex items-center gap-2">
+                <span className="hidden items-center gap-2 rounded-full border border-foreground/15 bg-background/70 px-4 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground sm:inline-flex">
+                  {displayIdentity}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="rounded-full border-foreground/20 bg-background px-4 text-[0.65rem] uppercase tracking-[0.3em]"
+                >
+                  Sign out
+                </Button>
               </div>
             ) : (
               <Button
