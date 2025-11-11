@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -37,6 +38,21 @@ const formatElapsed = (totalSeconds: number) => {
 };
 
 const formatDateTime = (value: Date) => dateTimeFormatter.format(value);
+
+const toNumber = (value: number | bigint | Prisma.Decimal | string | null | undefined) => {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "bigint") return Number(value);
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (value instanceof Prisma.Decimal) {
+    return value.toNumber();
+  }
+
+  return Number(value);
+};
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
@@ -91,14 +107,14 @@ export default async function ProfilePage() {
   ]);
 
   const totalSessions = aggregate._count._all ?? 0;
-  const avgWpm = aggregate._avg.wpm ?? 0;
-  const avgRawWpm = aggregate._avg.rawWpm ?? 0;
-  const avgAccuracy = aggregate._avg.accuracy ?? 0;
-  const avgConsistency = aggregate._avg.consistency ?? 0;
-  const bestWpm = aggregate._max.wpm ?? 0;
-  const worstWpm = aggregate._min.wpm ?? 0;
-  const totalCharacters = aggregate._sum.charactersTyped ?? 0;
-  const totalDurationSeconds = aggregate._sum.durationSeconds ?? 0;
+  const avgWpm = toNumber(aggregate._avg.wpm);
+  const avgRawWpm = toNumber(aggregate._avg.rawWpm);
+  const avgAccuracy = toNumber(aggregate._avg.accuracy);
+  const avgConsistency = toNumber(aggregate._avg.consistency);
+  const bestWpm = toNumber(aggregate._max.wpm);
+  const worstWpm = toNumber(aggregate._min.wpm);
+  const totalCharacters = toNumber(aggregate._sum.charactersTyped);
+  const totalDurationSeconds = toNumber(aggregate._sum.durationSeconds);
 
   const recentSample = recentResults.slice(0, 5);
   const recentAverage = recentSample.length
@@ -273,20 +289,26 @@ export default async function ProfilePage() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <ul className="space-y-2 text-xs uppercase tracking-[0.3em]">
-                  {durationBreakdown.map((bucket) => (
-                    <li key={bucket.durationSeconds} className="rounded-2xl border border-foreground/10 bg-background/70 px-4 py-3">
+                  {durationBreakdown.map((bucket) => {
+                    const bucketAvgWpm = toNumber(bucket._avg.wpm);
+                    const bucketAvgAccuracy = toNumber(bucket._avg.accuracy);
+                    const bucketMaxWpm = toNumber(bucket._max.wpm);
+
+                    return (
+                      <li key={bucket.durationSeconds} className="rounded-2xl border border-foreground/10 bg-background/70 px-4 py-3">
                       <div className="flex items-center justify-between text-foreground">
                         <span>{bucket.durationSeconds}s sessions</span>
                         <span>{formatInteger(bucket._count._all ?? 0)} runs</span>
                       </div>
                       <Separator className="my-2 border-dashed" />
                       <div className="flex flex-col gap-1 text-muted-foreground">
-                        <span>Average WPM · {formatDecimal(bucket._avg.wpm ?? 0)}</span>
-                        <span>Average accuracy · {formatPercent(bucket._avg.accuracy ?? 0)}</span>
-                        <span>Best WPM · {formatInteger(bucket._max.wpm ?? 0)}</span>
+                        <span>Average WPM · {formatDecimal(bucketAvgWpm)}</span>
+                        <span>Average accuracy · {formatPercent(bucketAvgAccuracy)}</span>
+                        <span>Best WPM · {formatInteger(bucketMaxWpm)}</span>
                       </div>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </CardContent>
             </Card>
