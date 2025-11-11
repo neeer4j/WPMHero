@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Velocity — Precision Typing",
-    template: "%s | Velocity",
+    default: "WPMHero — Precision Typing",
+    template: "%s | WPMHero",
   },
   description:
     "Desktop-first typing experience with real-time analytics, customizable themes, and secure email authentication.",

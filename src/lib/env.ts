@@ -13,7 +13,7 @@ export const env = createEnv({
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   },
   client: {
-    NEXT_PUBLIC_APP_NAME: z.string().default("Velocity"),
+  NEXT_PUBLIC_APP_NAME: z.string().default("WPMHero"),
     NEXT_PUBLIC_APP_URL: z.string().url().optional(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),

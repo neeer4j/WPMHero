@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     },
   });
 
-  await redis.zadd(`velocity:leaderboard:${data.duration}`, {
+  await redis.zadd(`wpmhero:leaderboard:${data.duration}`, {
     score: data.wpm,
     member: `${session.user.id}:${Date.now()}`,
   });

@@ -17,7 +17,7 @@ export default async function SignInPage() {
     <div className="mx-auto flex min-h-[70vh] w-full max-w-xl flex-col justify-center gap-8 px-6 py-16">
       <Card>
         <CardHeader>
-          <CardTitle>Sign in to Velocity</CardTitle>
+          <CardTitle>Sign in to WPMHero</CardTitle>
           <CardDescription>Magic link authentication powered by Supabase.</CardDescription>
         </CardHeader>
         <CardContent>

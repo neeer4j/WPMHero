@@ -196,7 +196,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
     <div className="flex flex-1 flex-col items-center">
       <header className="flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
-          <span className="text-xl font-semibold text-foreground">Velocity</span>
+          <span className="text-xl font-semibold text-foreground">WPMHero</span>
           <span className="hidden sm:inline">desktop drill · {duration}s</span>
         </div>
         <Tabs value={String(duration)} onValueChange={(value) => setDuration(Number(value))}>
@@ -262,7 +262,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
           </div>
           {!isAuthenticated && (
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              Sign in to sync results and unlock leaderboards
+              Sign in to sync results and unlock leaderboards in WPMHero
             </p>
           )}
         </div>

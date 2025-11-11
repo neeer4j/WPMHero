@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const durationParam = url.searchParams.get("duration");
   const duration = durationParam ? Number(durationParam) : DEFAULT_DURATION;
 
-  const leaderboardKey = `velocity:leaderboard:${duration}`;
+  const leaderboardKey = `wpmhero:leaderboard:${duration}`;
   const entries = await redis.zrange<{ member: string; score: number }[]>(leaderboardKey, 0, MAX_ENTRIES - 1, {
     rev: true,
     withScores: true,

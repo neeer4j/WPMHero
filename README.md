@@ -1,6 +1,6 @@
-## Velocity — Typing Analytics Platform
+## WPMHero — Typing Analytics Platform
 
-Velocity is a Monkeytype-inspired typing trainer focused on desktop workflows, deep telemetry, and a professional minimalist aesthetic. It ships with rich customization, secure email auth, and real-time leaderboards out of the box.
+WPMHero is a Monkeytype-inspired typing trainer focused on desktop workflows, deep telemetry, and a professional minimalist aesthetic. It ships with rich customization, secure email auth, and real-time leaderboards out of the box.
 
 ### Core stack
 
