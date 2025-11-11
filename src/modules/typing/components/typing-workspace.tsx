@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo } from "react";
-import { RefreshCw, RotateCcw } from "lucide-react";
+import { BarChart3, RefreshCw, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -22,8 +22,8 @@ const filterKey = (key: string) => {
 };
 
 const Stat = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
-  <div className="flex flex-col items-center gap-1 text-center">
-    <span className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">{label}</span>
+  <div className="flex flex-col gap-1 rounded-2xl border border-foreground/5 bg-background/60 px-4 py-3 text-center shadow-sm backdrop-blur">
+    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">{label}</span>
     <span className={cn("text-3xl font-semibold", highlight && "text-primary")}>{value}</span>
   </div>
 );
@@ -193,19 +193,19 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
   const remaining = formatSeconds(remainingSeconds);
 
   return (
-    <div className="flex flex-1 flex-col items-center">
-      <header className="flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-8 text-sm text-muted-foreground">
+    <div className="flex flex-1 flex-col items-center pb-20">
+      <header className="flex w-full max-w-5xl items-center justify-between gap-4 px-6 pt-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-3">
-          <span className="text-xl font-semibold text-foreground">WPMHero</span>
-          <span className="hidden sm:inline">desktop drill · {duration}s</span>
+          <span className="text-2xl font-semibold text-foreground">WPMHero</span>
+          <span className="hidden sm:inline">focused drill · {duration}s</span>
         </div>
         <Tabs value={String(duration)} onValueChange={(value) => setDuration(Number(value))}>
-          <TabsList className="rounded-full bg-muted/40 p-1">
+          <TabsList className="rounded-full border border-foreground/10 bg-muted/40 p-1">
             {DURATION_PRESETS.map((preset) => (
               <TabsTrigger
                 key={preset}
                 value={String(preset)}
-                className="rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em]"
+                className="rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em]"
               >
                 {preset}s
               </TabsTrigger>
@@ -218,7 +218,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
               {userEmail ?? "Signed in"}
             </span>
           ) : (
-            <Button asChild variant="ghost" size="sm" className="uppercase tracking-[0.3em]">
+            <Button asChild variant="outline" size="sm" className="rounded-full px-4 uppercase tracking-[0.3em]">
               <Link href="/signin">Sign in</Link>
             </Button>
           )}
@@ -244,26 +244,32 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail }: TypingWorkspaceP
       </header>
 
       <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-12 px-6">
-        <div className="w-full rounded-3xl border border-dashed bg-card/60 px-8 py-12 shadow-sm">
-          <div className="text-balance text-2xl leading-relaxed tracking-[0.08em] text-muted-foreground sm:text-4xl">
+        <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-8 py-14 shadow-xl backdrop-blur">
+          <div className="text-balance text-3xl leading-relaxed tracking-[0.06em] text-muted-foreground sm:text-4xl">
             {highlightedText}
           </div>
         </div>
 
-        <div className="flex w-full flex-col items-center gap-6">
-          <Progress value={progress} className="h-1 w-full max-w-4xl" />
-          <div className="grid w-full max-w-4xl grid-cols-2 gap-6 sm:grid-cols-6">
+        <div className="flex w-full flex-col items-center gap-7">
+          <div className="flex w-full max-w-4xl items-center gap-4 rounded-2xl border border-foreground/5 bg-background/80 px-6 py-3 shadow-sm backdrop-blur">
+            <Progress value={progress} className="h-1.5 flex-1" />
+            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+              {progress}%
+            </span>
+          </div>
+          <div className="grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
             <Stat label="WPM" value={wpm.toString()} highlight />
-            <Stat label="Raw" value={rawWpm.toString()} />
+            <Stat label="Raw Speed" value={rawWpm.toString()} />
             <Stat label="Accuracy" value={`${accuracy}%`} />
             <Stat label="Consistency" value={`${consistency}%`} />
             <Stat label="Errors" value={errors.toString()} />
-            <Stat label="Time" value={`${elapsed} / ${remaining}`} />
+            <Stat label="Clock" value={`${elapsed} / ${remaining}`} />
           </div>
           {!isAuthenticated && (
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              Sign in to sync results and unlock leaderboards in WPMHero
-            </p>
+            <div className="flex items-center gap-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 px-5 py-3 text-xs uppercase tracking-[0.3em] text-primary">
+              <BarChart3 className="h-4 w-4" />
+              Sync results and climb the WPMHero leaderboard by signing in
+            </div>
           )}
         </div>
       </main>
