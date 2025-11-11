@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo } from "react";
-import { BarChart3, RefreshCw, RotateCcw } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { ArrowLeft, BarChart3, RefreshCw, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 import { useTypingStore } from "@/modules/typing/state";
 import { countTotalCharacters, formatSeconds, generateWordSequence } from "@/modules/typing/utils";
@@ -63,6 +64,8 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
 
   const challengeChars = useMemo(() => countTotalCharacters(text), [text]);
   const flattenedText = useMemo(() => text.join(" "), [text]);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const caretRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (text.length === 0) {
@@ -126,6 +129,25 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
     return () => window.removeEventListener("keydown", handler);
   }, [challengeChars, complete, flattenedText, caretIndex, registerKeypress, started, start, completed, onExit]);
 
+  useEffect(() => {
+    if (!viewportRef.current || !caretRef.current) return;
+    const viewport = viewportRef.current;
+    const caret = caretRef.current;
+    const viewportWidth = viewport.clientWidth;
+    const caretOffset = caret.offsetLeft;
+    const buffer = viewportWidth * 0.35;
+    const targetScroll = Math.max(0, caretOffset - buffer);
+
+    viewport.scrollTo({ left: targetScroll, behavior: started ? "smooth" : "auto" });
+  }, [caretIndex, started]);
+
+  useEffect(() => {
+    if (!viewportRef.current) return;
+    if (!started) {
+      viewportRef.current.scrollTo({ left: 0, behavior: "auto" });
+    }
+  }, [started, flattenedText]);
+
   const submitResult = useCallback(async () => {
     try {
       const response = await fetch("/api/typing/results", {
@@ -182,10 +204,11 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
       return (
         <span
           key={`${char}-${index}`}
+          ref={isCaret ? caretRef : undefined}
           className={cn(
-            "px-[1px] transition-colors",
-            isCaret && "bg-foreground text-background",
-            isCompleted && "text-foreground",
+            "inline-block px-[1px] transition-colors duration-75",
+            isCaret && "rounded-sm bg-foreground text-background",
+            isCompleted && "text-foreground/70",
             !isCompleted && !isCaret && "text-muted-foreground",
           )}
         >
@@ -200,60 +223,109 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
 
   return (
     <div className="flex flex-1 flex-col items-center pb-20">
-      <header className="flex w-full max-w-5xl items-center justify-between gap-4 px-6 pt-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl font-semibold text-foreground">WPMHero</span>
-          <span className="hidden sm:inline">focused drill · {duration}s</span>
-        </div>
-        <Tabs value={String(duration)} onValueChange={(value) => setDuration(Number(value))}>
-          <TabsList className="rounded-full border border-foreground/10 bg-muted/40 p-1">
-            {DURATION_PRESETS.map((preset) => (
-              <TabsTrigger
-                key={preset}
-                value={String(preset)}
-                className="rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em]"
+      <header className="w-full max-w-5xl px-6 pt-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-[2.5rem] border border-foreground/15 bg-card/70 px-6 py-4 text-sm shadow-xl backdrop-blur">
+          <div className="flex flex-wrap items-center gap-4">
+            {onExit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2 rounded-full border border-foreground/15 bg-background/70 px-4 text-[0.65rem] uppercase tracking-[0.3em] text-foreground transition hover:border-foreground/40"
+                onClick={onExit}
               >
-                {preset}s
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <div className="flex items-center gap-2">
-          {isAuthenticated ? (
-            <span className="hidden text-xs uppercase tracking-[0.3em] text-muted-foreground sm:inline">
-              {userEmail ?? "Signed in"}
-            </span>
-          ) : (
-            <Button asChild variant="outline" size="sm" className="rounded-full px-4 uppercase tracking-[0.3em]">
-              <Link href="/signin">Sign in</Link>
+                <ArrowLeft className="h-3 w-3" />
+                Menu
+              </Button>
+            )}
+            <div className="flex items-center gap-3">
+              <span className="font-arcade text-sm uppercase text-foreground">WPMHero</span>
+              <span className="hidden text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground sm:inline">
+                Focused drill · {duration}s
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {isAuthenticated ? (
+              <div className="hidden items-center gap-2 rounded-full border border-foreground/15 bg-background/70 px-4 py-1 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground sm:flex">
+                <span>{userEmail ?? "Signed in"}</span>
+              </div>
+            ) : (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="rounded-full border-foreground/20 bg-background px-4 text-[0.65rem] uppercase tracking-[0.3em]"
+              >
+                <Link href="/signin">Sign in</Link>
+              </Button>
+            )}
+            <ThemeToggle />
+          </div>
+        </div>
+
+        <div className="mt-4 flex w-full flex-wrap items-center gap-4 rounded-3xl border border-foreground/10 bg-card/60 px-6 py-3 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+          <div className="flex min-w-[12rem] items-center gap-3 text-foreground">
+            <span className="font-arcade text-xs uppercase">Session Controls</span>
+            <span className="hidden sm:inline text-muted-foreground">Adjust your drill in real time</span>
+          </div>
+          <Tabs
+            value={String(duration)}
+            onValueChange={(value) => setDuration(Number(value))}
+            className="flex-row items-center gap-0"
+          >
+            <TabsList className="rounded-full border border-foreground/10 bg-background/70 p-1">
+              {DURATION_PRESETS.map((preset) => (
+                <TabsTrigger
+                  key={preset}
+                  value={String(preset)}
+                  className="rounded-full px-4 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.3em]"
+                >
+                  {preset}s
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <div className="ml-auto flex items-center gap-2 text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full border border-foreground/10 bg-background/70"
+              onClick={() => reset()}
+              aria-label="Reset session"
+            >
+              <RotateCcw className="h-4 w-4" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => reset()}
-            aria-label="Reset session"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full"
-            onClick={() => setText(generateWordSequence(WORD_COUNT))}
-            aria-label="Shuffle words"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full border border-foreground/10 bg-background/70"
+              onClick={() => setText(generateWordSequence(WORD_COUNT))}
+              aria-label="Shuffle words"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-12 px-6">
-        <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-8 py-14 shadow-xl backdrop-blur">
-          <div className="text-balance text-3xl leading-relaxed tracking-[0.06em] text-muted-foreground sm:text-4xl">
-            {highlightedText}
+        <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-8 py-10 shadow-xl backdrop-blur">
+          <div
+            ref={viewportRef}
+            className="relative h-40 w-full overflow-x-scroll overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-card via-card/80 to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-card via-card/80 to-transparent" />
+            <div className="flex h-full items-center whitespace-nowrap text-3xl leading-relaxed tracking-[0.1em] text-muted-foreground sm:text-4xl">
+              {highlightedText}
+            </div>
           </div>
+        </div>
+
+        <div className="flex w-full max-w-4xl flex-col items-center gap-2 text-center">
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Current WPM</span>
+          <span className="font-arcade text-4xl text-foreground sm:text-5xl">{Math.round(wpm)}</span>
         </div>
 
         <div className="flex w-full flex-col items-center gap-7">
@@ -263,6 +335,17 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
               {progress}%
             </span>
           </div>
+
+          {completed && (
+            <div className="flex w-full max-w-4xl flex-col items-center gap-2 rounded-3xl border border-primary/30 bg-primary/10 px-6 py-6 text-center">
+              <span className="text-xs uppercase tracking-[0.3em] text-primary/80">Final WPM</span>
+              <span className="font-arcade text-5xl text-primary sm:text-6xl">{Math.round(wpm)}</span>
+              <span className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+                Accuracy {accuracy}% · Raw {rawWpm} WPM · Consistency {consistency}%
+              </span>
+            </div>
+          )}
+
           <div className="grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
             <Stat label="WPM" value={wpm.toString()} highlight />
             <Stat label="Raw Speed" value={rawWpm.toString()} />

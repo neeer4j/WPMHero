@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Keyboard, TrophyIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { TypingWorkspace } from "@/modules/typing/components/typing-workspace";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const highlights = [
   {
@@ -40,7 +40,15 @@ const WelcomeScreen = ({ onBegin }: WelcomeScreenProps) => {
   }, [onBegin]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between gap-12 bg-background px-6 py-16 text-foreground">
+    <div className="flex min-h-screen flex-col items-center gap-12 bg-background px-6 py-16 text-foreground">
+      <header className="flex w-full max-w-5xl items-center justify-between rounded-[2.5rem] border border-foreground/15 bg-card/70 px-6 py-4 text-[0.65rem] uppercase tracking-[0.3em] shadow-xl backdrop-blur">
+        <span className="font-arcade text-sm uppercase text-foreground">WPMHero</span>
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span className="hidden sm:inline">Arcade typing simulator</span>
+          <ThemeToggle />
+        </div>
+      </header>
+
       <div className="flex w-full max-w-5xl flex-col gap-12 text-center">
         <div className="space-y-6">
           <p className="font-arcade text-xs uppercase text-muted-foreground">Arcade typing simulator</p>
