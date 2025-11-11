@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+}
+
+enum ThemeMode {
+  LIGHT
+  DARK
+  SYSTEM
+  PLAYFUL
+}
+
+enum TextSourceType {
+  QUOTE
+  WORD_LIST
+  CUSTOM
+  CODE
+}
+
+model User {
+  id             String            @id @default(cuid())
+  name           String?
+  email          String?           @unique
+  emailVerified  DateTime?
+  image          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  accounts       Account[]
+  sessions       Session[]
+  tests          TestResult[]
+  settings       UserSettings?
+  achievements   UserAchievement[]
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model TypingMode {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String?
+  isPremium   Boolean       @default(false)
+  category    String        @default("standard")
+  config      Json          @default("{}")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tests       TestResult[]
+}
+
+model TextSource {
+  id          String         @id @default(cuid())
+  type        TextSourceType @default(QUOTE)
+  language    String         @default("en")
+  content     String?
+  externalId  String?
+  metadata    Json?
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  tests       TestResult[]
+
+  @@index([type, language])
+  @@index([externalId])
+}
+
+model TestResult {
+  id                   String      @id @default(cuid())
+  userId               String?
+  modeId               String
+  textSourceId         String?
+  startedAt            DateTime    @default(now())
+  completedAt          DateTime?
+  durationSeconds      Int         @default(60)
+  wpm                  Int
+  rawWpm               Int         @default(0)
+  accuracy             Float
+  consistency          Float       @default(0)
+  charactersTyped      Int         @default(0)
+  charactersCorrect    Int         @default(0)
+  charactersIncorrect  Int         @default(0)
+  streak               Int         @default(0)
+  settingsSnapshot     Json?
+  keypressTimings      Json?
+  tags                 String[]    @default([])
+  createdAt            DateTime    @default(now())
+  user                 User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  mode                 TypingMode  @relation(fields: [modeId], references: [id])
+  textSource           TextSource? @relation(fields: [textSourceId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([modeId, createdAt])
+  @@index([wpm])
+}
+
+model UserSettings {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  themeMode          ThemeMode @default(SYSTEM)
+  themeAccent        String    @default("#0EA5E9")
+  keyboardLayout     String    @default("qwerty")
+  preferredDurations Int[]     @default([])
+  preferredModes     String[]  @default([])
+  advancedSettings   Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  name        String
+  description String?
+  icon        String?
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id             String       @id @default(cuid())
+  userId         String
+  achievementId  String
+  unlockedAt     DateTime     @default(now())
+  metadata       Json?
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement    Achievement  @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([achievementId])
+}
