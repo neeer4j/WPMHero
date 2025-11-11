@@ -222,8 +222,8 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
   const remaining = formatSeconds(remainingSeconds);
 
   return (
-    <div className="flex flex-1 flex-col items-center pb-20">
-      <header className="w-full max-w-5xl px-6 pt-6">
+    <div className="flex min-h-dvh flex-col items-center bg-background">
+      <header className="w-full max-w-5xl px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-[2.5rem] border border-foreground/15 bg-card/70 px-6 py-4 text-sm shadow-xl backdrop-blur">
           <div className="flex flex-wrap items-center gap-4">
             {onExit && (
@@ -264,17 +264,13 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
           </div>
         </div>
 
-        <div className="mt-4 flex w-full flex-wrap items-center gap-4 rounded-3xl border border-foreground/10 bg-card/60 px-6 py-3 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+  <div className="mt-3 flex w-full flex-wrap items-center gap-4 rounded-3xl border border-foreground/10 bg-card/60 px-5 py-2 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
           <div className="flex min-w-[12rem] items-center gap-3 text-foreground">
             <span className="font-arcade text-xs uppercase">Session Controls</span>
             <span className="hidden sm:inline text-muted-foreground">Adjust your drill in real time</span>
           </div>
-          <Tabs
-            value={String(duration)}
-            onValueChange={(value) => setDuration(Number(value))}
-            className="flex-row items-center gap-0"
-          >
-            <TabsList className="rounded-full border border-foreground/10 bg-background/70 p-1">
+          <Tabs value={String(duration)} onValueChange={(value) => setDuration(Number(value))} className="flex-row items-center gap-0">
+            <TabsList className="rounded-full border border-foreground/10 bg-background/70 p-1 shadow-sm">
               {DURATION_PRESETS.map((preset) => (
                 <TabsTrigger
                   key={preset}
@@ -309,27 +305,25 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
         </div>
       </header>
 
-      <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-12 px-6">
-        <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-8 py-10 shadow-xl backdrop-blur">
+      <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-6 py-4">
+        <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-6 py-7 shadow-xl backdrop-blur">
           <div
             ref={viewportRef}
-            className="relative h-40 w-full overflow-x-scroll overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="relative h-36 w-full overflow-x-scroll overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-card via-card/80 to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-card via-card/80 to-transparent" />
-            <div className="flex h-full items-center whitespace-nowrap text-3xl leading-relaxed tracking-[0.1em] text-muted-foreground sm:text-4xl">
+            <div className="flex h-full items-center whitespace-nowrap text-[clamp(1.5rem,2vw+1rem,2.5rem)] leading-relaxed tracking-[0.08em] text-muted-foreground">
               {highlightedText}
             </div>
           </div>
         </div>
 
-        <div className="flex w-full max-w-4xl flex-col items-center gap-2 text-center">
-          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Current WPM</span>
+        <div className="flex w-full max-w-4xl flex-col items-center gap-1 text-center">
+          <span className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">Current WPM</span>
           <span className="font-arcade text-4xl text-foreground sm:text-5xl">{Math.round(wpm)}</span>
         </div>
 
-        <div className="flex w-full flex-col items-center gap-7">
-          <div className="flex w-full max-w-4xl items-center gap-4 rounded-2xl border border-foreground/5 bg-background/80 px-6 py-3 shadow-sm backdrop-blur">
+        <div className="flex w-full flex-col items-center gap-5">
+          <div className="flex w-full max-w-4xl items-center gap-4 rounded-2xl border border-foreground/5 bg-background/80 px-6 py-2.5 shadow-sm backdrop-blur">
             <Progress value={progress} className="h-1.5 flex-1" />
             <span className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">
               {progress}%
@@ -337,10 +331,10 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, onExit }: TypingWo
           </div>
 
           {completed && (
-            <div className="flex w-full max-w-4xl flex-col items-center gap-2 rounded-3xl border border-primary/30 bg-primary/10 px-6 py-6 text-center">
-              <span className="text-xs uppercase tracking-[0.3em] text-primary/80">Final WPM</span>
+            <div className="flex w-full max-w-4xl flex-col items-center gap-1.5 rounded-3xl border border-primary/30 bg-primary/10 px-5 py-5 text-center">
+              <span className="text-[0.65rem] uppercase tracking-[0.3em] text-primary/80">Final WPM</span>
               <span className="font-arcade text-5xl text-primary sm:text-6xl">{Math.round(wpm)}</span>
-              <span className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
+              <span className="text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
                 Accuracy {accuracy}% · Raw {rawWpm} WPM · Consistency {consistency}%
               </span>
             </div>
