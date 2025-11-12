@@ -15,18 +15,30 @@ export const createSupabaseServerClient = async () => {
       },
       set(name: string, value: string, options: CookieOptions) {
         if (typeof cookieStore.set !== "function") return;
-        cookieStore.set({
-          name,
-          value,
-          ...options,
-        });
+        try {
+          cookieStore.set({
+            name,
+            value,
+            ...options,
+          });
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("Supabase cookie set ignored in this context", error);
+          }
+        }
       },
       remove(name: string, options: CookieOptions) {
         if (typeof cookieStore.delete !== "function") return;
-        cookieStore.delete({
-          name,
-          ...options,
-        });
+        try {
+          cookieStore.delete({
+            name,
+            ...options,
+          });
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn("Supabase cookie delete ignored in this context", error);
+          }
+        }
       },
     },
   });
