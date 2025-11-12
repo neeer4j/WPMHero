@@ -5,6 +5,19 @@ import { env } from "@/lib/env";
 
 export const createSupabaseServerClient = async () => {
   const cookieStore = await cookies();
+  let cookiesWritable = typeof cookieStore.set === "function" && typeof cookieStore.delete === "function";
+
+  const safely = (operation: () => void, context: "set" | "delete") => {
+    if (!cookiesWritable) return;
+    try {
+      operation();
+    } catch (error) {
+      cookiesWritable = false;
+      if (process.env.NODE_ENV === "development") {
+        console.warn(`Supabase cookie ${context} ignored in this context`, error);
+      }
+    }
+  };
 
   return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
@@ -13,36 +26,28 @@ export const createSupabaseServerClient = async () => {
         if (!cookie) return undefined;
         return typeof cookie === "string" ? cookie : cookie.value;
       },
-      async set(name: string, value: string, options: CookieOptions) {
+      set(name: string, value: string, options: CookieOptions) {
         if (typeof cookieStore.set !== "function") return;
-        try {
-          await Promise.resolve(
+        safely(
+          () =>
             cookieStore.set({
               name,
               value,
               ...options,
             }),
-          );
-        } catch (error) {
-          if (process.env.NODE_ENV === "development") {
-            console.warn("Supabase cookie set ignored in this context", error);
-          }
-        }
+          "set",
+        );
       },
-      async remove(name: string, options: CookieOptions) {
+      remove(name: string, options: CookieOptions) {
         if (typeof cookieStore.delete !== "function") return;
-        try {
-          await Promise.resolve(
+        safely(
+          () =>
             cookieStore.delete({
               name,
               ...options,
             }),
-          );
-        } catch (error) {
-          if (process.env.NODE_ENV === "development") {
-            console.warn("Supabase cookie delete ignored in this context", error);
-          }
-        }
+          "delete",
+        );
       },
     },
   });
