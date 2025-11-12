@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { TestResult } from "@prisma/client";
-import { Prisma } from "@prisma/client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -40,7 +39,9 @@ const formatElapsed = (totalSeconds: number) => {
 
 const formatDateTime = (value: Date) => dateTimeFormatter.format(value);
 
-const toNumber = (value: number | bigint | Prisma.Decimal | string | null | undefined) => {
+type NumericLike = number | bigint | string | { toNumber?: () => number; toString?: () => string } | null | undefined;
+
+const toNumber = (value: NumericLike) => {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return value;
   if (typeof value === "bigint") return Number(value);
@@ -48,11 +49,27 @@ const toNumber = (value: number | bigint | Prisma.Decimal | string | null | unde
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
   }
-  if (value instanceof Prisma.Decimal) {
-    return value.toNumber();
+
+  if (typeof value === "object") {
+    const candidate = value as { toNumber?: () => number; toString?: () => string };
+
+    if (typeof candidate.toNumber === "function") {
+      const converted = candidate.toNumber();
+      if (Number.isFinite(converted)) {
+        return converted;
+      }
+    }
+
+    if (typeof candidate.toString === "function") {
+      const parsed = Number(candidate.toString());
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
   }
 
-  return Number(value);
+  const fallback = Number(value);
+  return Number.isFinite(fallback) ? fallback : 0;
 };
 
 const normalizeRun = (run: TestResult | null) => {
@@ -129,7 +146,13 @@ export default async function ProfilePage() {
   const normalizedBestRun = normalizeRun(bestRunRaw);
   const normalizedWorstRun = normalizeRun(worstRunRaw);
 
-  const recentSample = recentResults.slice(0, 5);
+  const normalizedRecentResults = recentResults.map((result) => ({
+    ...result,
+    accuracy: toNumber(result.accuracy),
+    consistency: toNumber(result.consistency),
+  }));
+
+  const recentSample = normalizedRecentResults.slice(0, 5);
   const recentAverage = recentSample.length
     ? recentSample.reduce((sum, item) => sum + item.wpm, 0) / recentSample.length
     : 0;
@@ -280,21 +303,16 @@ export default async function ProfilePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentResults.map((result) => {
-                      const accuracyValue = toNumber(result.accuracy);
-                      const consistencyValue = toNumber(result.consistency);
-
-                      return (
-                        <tr key={result.id} className="border-t border-foreground/10 text-[0.65rem]">
-                          <td className="px-3 py-2 text-foreground">{formatDateTime(result.createdAt)}</td>
-                          <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.wpm)}</td>
-                          <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.rawWpm)}</td>
-                          <td className="px-3 py-2 text-right text-foreground">{formatPercent(accuracyValue)}</td>
-                          <td className="px-3 py-2 text-right text-foreground">{formatDecimal(consistencyValue)}</td>
-                          <td className="px-3 py-2 text-right text-foreground">{result.durationSeconds}s</td>
-                        </tr>
-                      );
-                    })}
+                    {normalizedRecentResults.map((result) => (
+                      <tr key={result.id} className="border-t border-foreground/10 text-[0.65rem]">
+                        <td className="px-3 py-2 text-foreground">{formatDateTime(result.createdAt)}</td>
+                        <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.wpm)}</td>
+                        <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.rawWpm)}</td>
+                        <td className="px-3 py-2 text-right text-foreground">{formatPercent(result.accuracy)}</td>
+                        <td className="px-3 py-2 text-right text-foreground">{formatDecimal(result.consistency)}</td>
+                        <td className="px-3 py-2 text-right text-foreground">{result.durationSeconds}s</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </CardContent>
