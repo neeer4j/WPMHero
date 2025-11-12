@@ -186,6 +186,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
       }
       const response = await fetch("/api/typing/results", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wpm,
@@ -258,10 +259,12 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
 
     return characters.map((char, index) => {
       const inputValue = inputs[index] ?? null;
-      const isCorrect = inputValue !== null && inputValue === char;
-      const isIncorrect = inputValue !== null && inputValue !== char;
-      const isCaret = caretPosition === index;
-      const displayChar = inputValue !== null ? inputValue : char;
+  const isCorrect = inputValue !== null && inputValue === char;
+  const isIncorrect = inputValue !== null && inputValue !== char;
+  const isCaret = caretPosition === index;
+  // When the user mistypes a letter, show the original/target character in red
+  // instead of the wrongly-typed character. This makes it clear what was expected.
+  const displayChar = inputValue !== null ? (isIncorrect ? char : inputValue) : char;
 
       return (
         <span
