@@ -12,17 +12,27 @@ export async function GET(request: Request) {
   const duration = durationParam ? Number(durationParam) : DEFAULT_DURATION;
 
   const leaderboardKey = `wpmhero:leaderboard:${duration}`;
-  const entries = await redis.zrange<{ member: string; score: number }[]>(leaderboardKey, 0, MAX_ENTRIES - 1, {
-    rev: true,
-    withScores: true,
-  });
+  let entries: { member: string; score: number }[] = [];
+
+  try {
+    const rawEntries = await redis.zrange(leaderboardKey, 0, MAX_ENTRIES - 1, {
+      rev: true,
+      withScores: true,
+    });
+    entries = Array.isArray(rawEntries) ? (rawEntries as { member: string; score: number }[]) : [];
+  } catch (error) {
+    console.error("Failed to load leaderboard from Redis", { leaderboardKey, error });
+    return NextResponse.json({ duration, leaderboard: [] }, { status: 200 });
+  }
 
   const userIds = entries.map((entry) => entry.member.split(":")[0]);
 
-  const users = (await prisma.user.findMany({
-    where: { id: { in: userIds } },
-    select: { id: true, name: true, image: true },
-  })) as { id: string; name: string | null; image: string | null }[];
+  const users = userIds.length
+    ? ((await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, name: true, image: true },
+      })) as { id: string; name: string | null; image: string | null }[])
+    : [];
 
   const leaderboard = entries.map((entry) => {
     const [userId, timestamp] = entry.member.split(":");
