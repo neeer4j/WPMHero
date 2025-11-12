@@ -55,6 +55,10 @@ export async function POST(request: Request) {
   }
 
   if (!session?.user?.id) {
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.warn("/api/typing/results: unauthorized - no supabase session present");
+    }
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
