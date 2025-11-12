@@ -210,17 +210,142 @@ export default async function ProfilePage() {
       </header>
 
       {totalSessions === 0 ? (
-        <Card className="border-foreground/10 bg-card/80">
-          <CardHeader>
-            <CardTitle>No sessions recorded yet</CardTitle>
-            <CardDescription>Complete a typing test to unlock your personalized analytics.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="rounded-full px-4 text-[0.65rem] uppercase tracking-[0.3em]">
-              <Link href="/">Start your first run</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="border-foreground/10 bg-card/80">
+            <CardHeader>
+              <CardTitle>No sessions recorded yet</CardTitle>
+              <CardDescription>Complete a typing test to unlock your personalized analytics.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="rounded-full px-4 text-[0.65rem] uppercase tracking-[0.3em]">
+                <Link href="/">Start your first run</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Demo data preview so you can see the profile UI without recording runs */}
+          <section className="mt-6">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.28em] text-muted-foreground">Preview demo stats</h2>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Total sessions</CardTitle>
+                  <CardDescription>Demo</CardDescription>
+                </CardHeader>
+                <CardContent className="text-3xl font-semibold text-foreground">12</CardContent>
+              </Card>
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Average WPM</CardTitle>
+                  <CardDescription>Demo</CardDescription>
+                </CardHeader>
+                <CardContent className="text-3xl font-semibold text-foreground">72.4</CardContent>
+              </Card>
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Average accuracy</CardTitle>
+                  <CardDescription>Demo</CardDescription>
+                </CardHeader>
+                <CardContent className="text-3xl font-semibold text-foreground">96.5%</CardContent>
+              </Card>
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Total typed characters</CardTitle>
+                  <CardDescription>Demo</CardDescription>
+                </CardHeader>
+                <CardContent className="text-3xl font-semibold text-foreground">18,542</CardContent>
+              </Card>
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Personal best</CardTitle>
+                  <CardDescription>Demo best sprint.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <p className="text-3xl font-semibold text-foreground">95 WPM</p>
+                  <ul className="space-y-1 text-xs uppercase tracking-[0.3em]">
+                    <li>Duration · 60s</li>
+                    <li>Accuracy · 98.2%</li>
+                    <li>Logged · Jan 12, 2025</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Consistency tracker</CardTitle>
+                  <CardDescription>Demo recent cadence.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <p className="text-3xl font-semibold text-foreground">74.6 WPM</p>
+                  <ul className="space-y-1 text-xs uppercase tracking-[0.3em]">
+                    <li>Recent average (5) · 74.6 WPM</li>
+                    <li>Lifetime raw average · 76.1 WPM</li>
+                    <li>Consistency index · 3.2</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Endurance totals</CardTitle>
+                  <CardDescription>Demo time invested.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <p className="text-3xl font-semibold text-foreground">1h 42m</p>
+                  <ul className="space-y-1 text-xs uppercase tracking-[0.3em]">
+                    <li>Lowest recorded run · 42 WPM</li>
+                    <li>Lifetime accuracy · 96.5%</li>
+                    <li>Lifetime consistency · 3.2</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="mt-6">
+              <Card className="border-foreground/10 bg-card/80">
+                <CardHeader>
+                  <CardTitle>Recent (demo)</CardTitle>
+                  <CardDescription>Sample last five sessions</CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto">
+                  <table className="w-full min-w-[32rem] table-auto text-left text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                    <thead className="bg-background/70 text-[0.6rem]">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Date</th>
+                        <th className="px-3 py-2 font-medium text-right">WPM</th>
+                        <th className="px-3 py-2 font-medium text-right">Raw</th>
+                        <th className="px-3 py-2 font-medium text-right">Accuracy</th>
+                        <th className="px-3 py-2 font-medium text-right">Consistency</th>
+                        <th className="px-3 py-2 font-medium text-right">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { id: "d1", createdAt: new Date("2025-01-12T10:00:00Z"), wpm: 95, rawWpm: 97, accuracy: 98.2, consistency: 2.9, durationSeconds: 60 },
+                        { id: "d2", createdAt: new Date("2025-01-10T12:30:00Z"), wpm: 76, rawWpm: 78, accuracy: 97.1, consistency: 3.4, durationSeconds: 60 },
+                        { id: "d3", createdAt: new Date("2025-01-08T09:20:00Z"), wpm: 69, rawWpm: 71, accuracy: 95.6, consistency: 3.8, durationSeconds: 30 },
+                        { id: "d4", createdAt: new Date("2025-01-05T14:05:00Z"), wpm: 62, rawWpm: 64, accuracy: 94.8, consistency: 4.0, durationSeconds: 30 },
+                        { id: "d5", createdAt: new Date("2025-01-02T16:45:00Z"), wpm: 81, rawWpm: 83, accuracy: 96.9, consistency: 3.1, durationSeconds: 60 },
+                      ].map((result) => (
+                        <tr key={result.id} className="border-t border-foreground/10 text-[0.65rem]">
+                          <td className="px-3 py-2 text-foreground">{formatDateTime(result.createdAt)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.wpm)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatInteger(result.rawWpm)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatPercent(result.accuracy)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatDecimal(result.consistency)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{result.durationSeconds}s</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </>
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
