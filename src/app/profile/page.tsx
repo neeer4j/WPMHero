@@ -95,43 +95,73 @@ export default async function ProfilePage() {
   const userMetadata = (session.user.user_metadata ?? {}) as { full_name?: string; name?: string };
   const displayName = userMetadata.full_name ?? userMetadata.name ?? session.user.email ?? "You";
 
-  const [aggregate, recentResults, durationBreakdown, bestRunRaw, worstRunRaw, userRecord] = await Promise.all([
-    prisma.testResult.aggregate({
-      where: { userId },
-      _count: { _all: true },
-      _avg: { wpm: true, rawWpm: true, accuracy: true, consistency: true },
-      _max: { wpm: true, accuracy: true, consistency: true },
-      _min: { wpm: true, accuracy: true, consistency: true },
-      _sum: { charactersTyped: true, durationSeconds: true },
-    }),
-    prisma.testResult.findMany({
-      where: { userId },
-      orderBy: [{ createdAt: "desc" }],
-      take: 20,
-    }),
-    prisma.testResult.groupBy({
-      where: { userId },
-      by: ["durationSeconds"],
-      _count: { _all: true },
-      _avg: { wpm: true, accuracy: true, consistency: true },
-      _max: { wpm: true },
-      orderBy: {
-        durationSeconds: "asc",
-      },
-    }),
-    prisma.testResult.findFirst({
-      where: { userId },
-      orderBy: [{ wpm: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.testResult.findFirst({
-      where: { userId },
-      orderBy: [{ wpm: "asc" }, { createdAt: "desc" }],
-    }),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { createdAt: true },
-    }),
-  ]);
+  let aggregate: any = null;
+  let recentResults: TestResult[] = [];
+  let durationBreakdown: any[] = [];
+  let bestRunRaw: TestResult | null = null;
+  let worstRunRaw: TestResult | null = null;
+  let userRecord: { createdAt?: Date } | null = null;
+
+  try {
+    [aggregate, recentResults, durationBreakdown, bestRunRaw, worstRunRaw, userRecord] = await Promise.all([
+      prisma.testResult.aggregate({
+        where: { userId },
+        _count: { _all: true },
+        _avg: { wpm: true, rawWpm: true, accuracy: true, consistency: true },
+        _max: { wpm: true, accuracy: true, consistency: true },
+        _min: { wpm: true, accuracy: true, consistency: true },
+        _sum: { charactersTyped: true, durationSeconds: true },
+      }),
+      prisma.testResult.findMany({
+        where: { userId },
+        orderBy: [{ createdAt: "desc" }],
+        take: 20,
+      }),
+      prisma.testResult.groupBy({
+        where: { userId },
+        by: ["durationSeconds"],
+        _count: { _all: true },
+        _avg: { wpm: true, accuracy: true, consistency: true },
+        _max: { wpm: true },
+        orderBy: {
+          durationSeconds: "asc",
+        },
+      }),
+      prisma.testResult.findFirst({
+        where: { userId },
+        orderBy: [{ wpm: "desc" }, { createdAt: "desc" }],
+      }),
+      prisma.testResult.findFirst({
+        where: { userId },
+        orderBy: [{ wpm: "asc" }, { createdAt: "desc" }],
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { createdAt: true },
+      }),
+    ]);
+  } catch (err) {
+    // Log and continue with safe defaults to avoid server-render crashes in production.
+    // Keeping the error logging minimal to avoid leaking sensitive info to users.
+    // If running locally, print the error for debugging.
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.error("Failed to load profile data:", err);
+    }
+
+    aggregate = {
+      _count: { _all: 0 },
+      _avg: { wpm: 0, rawWpm: 0, accuracy: 0, consistency: 0 },
+      _max: { wpm: 0, accuracy: 0, consistency: 0 },
+      _min: { wpm: 0, accuracy: 0, consistency: 0 },
+      _sum: { charactersTyped: 0, durationSeconds: 0 },
+    };
+    recentResults = [];
+    durationBreakdown = [];
+    bestRunRaw = null;
+    worstRunRaw = null;
+    userRecord = null;
+  }
 
   const totalSessions = aggregate._count._all ?? 0;
   const avgWpm = toNumber(aggregate._avg.wpm);
