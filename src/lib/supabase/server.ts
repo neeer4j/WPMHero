@@ -13,27 +13,31 @@ export const createSupabaseServerClient = async () => {
         if (!cookie) return undefined;
         return typeof cookie === "string" ? cookie : cookie.value;
       },
-      set(name: string, value: string, options: CookieOptions) {
+      async set(name: string, value: string, options: CookieOptions) {
         if (typeof cookieStore.set !== "function") return;
         try {
-          cookieStore.set({
-            name,
-            value,
-            ...options,
-          });
+          await Promise.resolve(
+            cookieStore.set({
+              name,
+              value,
+              ...options,
+            }),
+          );
         } catch (error) {
           if (process.env.NODE_ENV === "development") {
             console.warn("Supabase cookie set ignored in this context", error);
           }
         }
       },
-      remove(name: string, options: CookieOptions) {
+      async remove(name: string, options: CookieOptions) {
         if (typeof cookieStore.delete !== "function") return;
         try {
-          cookieStore.delete({
-            name,
-            ...options,
-          });
+          await Promise.resolve(
+            cookieStore.delete({
+              name,
+              ...options,
+            }),
+          );
         } catch (error) {
           if (process.env.NODE_ENV === "development") {
             console.warn("Supabase cookie delete ignored in this context", error);
