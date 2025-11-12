@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, BarChart3, RefreshCw, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -169,6 +170,20 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
 
   const submitResult = useCallback(async () => {
     try {
+      // Attach runtime debug info: log current Supabase session (client-side)
+      try {
+        const { data: clientSession } = await client.auth.getSession();
+        // Only log detailed session info in development
+        if (process.env.NODE_ENV !== "production") {
+          // eslint-disable-next-line no-console
+          console.debug("submitResult: current supabase session:", clientSession?.session ?? clientSession);
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV !== "production") {
+          // eslint-disable-next-line no-console
+          console.debug("submitResult: failed to fetch client session", err);
+        }
+      }
       const response = await fetch("/api/typing/results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -189,10 +204,15 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
       });
 
       if (!response.ok) {
-        console.error("Failed to persist result", await response.text());
+        const txt = await response.text();
+        console.error("Failed to persist result", txt);
+        if (response.status === 401) {
+          toast.error("You must be signed in to record a run. Please sign in and try again.");
+        }
       }
     } catch (error) {
       console.error("Failed to persist result", error);
+      toast.error("Failed to record your run. Check console for details.");
     }
   }, [
     accuracy,
