@@ -171,19 +171,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
   const submitResult = useCallback(async () => {
     try {
       // Attach runtime debug info: log current Supabase session (client-side)
-      try {
-        const { data: clientSession } = await client.auth.getSession();
-        // Only log detailed session info in development
-        if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
-          console.debug("submitResult: current supabase session:", clientSession?.session ?? clientSession);
-        }
-      } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
-          console.debug("submitResult: failed to fetch client session", err);
-        }
-      }
+      // Intentionally not logging session details here to avoid noisy console output.
       const response = await fetch("/api/typing/results", {
         method: "POST",
         credentials: "include",

@@ -74,7 +74,7 @@ const WelcomeScreen = ({ onBegin }: WelcomeScreenProps) => {
 			setError(null);
 
 			try {
-				const response = await fetch("/api/typing/leaderboard?duration=60");
+				const response = await fetch("/api/typing/leaderboard?duration=60", { credentials: "include" });
 
 				if (!response.ok) {
 					throw new Error("Failed to fetch leaderboard.");
