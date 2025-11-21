@@ -9,6 +9,7 @@ import { env } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/components/providers/supabase-provider";
+import { SupabaseHealthBanner } from "@/components/auth/supabase-health";
 
 const posthogKey = env.NEXT_PUBLIC_POSTHOG_KEY;
 const posthogHost = env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://app.posthog.com";
@@ -32,6 +33,7 @@ export const AppProviders = ({ children, className, session }: AppProvidersProps
 
   const content = (
     <div className={cn("min-h-screen bg-background text-foreground", className)}>
+      <SupabaseHealthBanner />
       {children}
       <Toaster position="top-center" richColors />
     </div>
