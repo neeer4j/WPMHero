@@ -32,7 +32,8 @@ export default function GameArena() {
   useEffect(() => {
     // Prepare a pool of words (split the generated long sequence)
     const seq = generateWordSequence(400);
-    wordPoolRef.current = seq.split(" ").filter(Boolean);
+    // `generateWordSequence` already returns a string[]
+    wordPoolRef.current = seq.slice();
   }, []);
 
   const spawnWord = useCallback(() => {
