@@ -43,9 +43,18 @@ export default function GameArena() {
     const text = pool[Math.floor(Math.random() * pool.length)];
     const id = Math.random().toString(36).slice(2, 9);
     const x = Math.random() * 80 + 5; // percent, avoid edges
-    // map level WPM to base fall speed (px/s). baseline 20 WPM -> 40 px/s
-    const baseSpeed = 40 * (LEVEL_WPM[levelIndex] / 20);
-    const speedVariance = baseSpeed * (0.85 + Math.random() * 0.4);
+    // compute fall speed so that a word takes roughly `fallTime` seconds to reach bottom
+    // average time per word = 60 / targetWpm (seconds). Use a multiplier to give slight buffer.
+    const targetWpm = LEVEL_WPM[levelIndex] ?? LEVEL_WPM[0];
+    const avgSecondsPerWord = 60 / Math.max(1, targetWpm);
+    const fallTimeSeconds = avgSecondsPerWord * 1.25; // 25% buffer so it's challenging but fair
+
+    const containerHeight = containerRef.current?.clientHeight ?? 420;
+    const startOffset = 0; // starting y (px)
+    const availableDistance = Math.max(120, containerHeight - 48); // leave some bottom padding
+    const speedPxPerSec = availableDistance / Math.max(0.5, fallTimeSeconds);
+    // small random variance so words don't all fall identically
+    const speedVariance = speedPxPerSec * (0.9 + Math.random() * 0.25);
 
     setWords((s) => [...s, { id, text, x, y: 0, speed: speedVariance }]);
   }, [levelIndex]);
@@ -55,11 +64,12 @@ export default function GameArena() {
     if (!running) return;
     let spawnTimer: number | null = null;
     const spawnLoop = () => {
-      // spawn interval in ms based on level WPM (approx one word per targetWPM / minute)
+      // spawn interval based on target WPM: one word per (60/targetWpm) seconds, slightly faster to keep pressure
       const targetWpm = LEVEL_WPM[levelIndex];
-      const msPerWord = Math.max(250, Math.round(60000 / targetWpm));
+      const avgMsPerWord = (60 / Math.max(1, targetWpm)) * 1000;
+      const spawnMs = Math.max(250, Math.round(avgMsPerWord * 0.9));
       spawnWord();
-      spawnTimer = window.setTimeout(spawnLoop, msPerWord / (0.9 + Math.random() * 0.4));
+      spawnTimer = window.setTimeout(spawnLoop, Math.round(spawnMs * (0.9 + Math.random() * 0.3)));
     };
 
     spawnLoop();
