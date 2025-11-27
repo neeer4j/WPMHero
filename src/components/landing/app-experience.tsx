@@ -269,13 +269,23 @@ const WelcomeScreen = ({ onBegin }: WelcomeScreenProps) => {
 				</div>
 
 				<div className="flex flex-col items-center gap-3">
-					<Button
-						onClick={onBegin}
-						className="font-arcade flex items-center gap-3 rounded-full border border-foreground/30 bg-foreground px-7 py-3 text-background transition hover:scale-[1.03]"
-					>
-						Enter typing test
-						<ArrowRight className="h-4 w-4" />
-					</Button>
+					<div className="flex gap-3">
+						<Button
+							onClick={onBegin}
+							className="font-arcade flex items-center gap-3 rounded-full border border-foreground/30 bg-foreground px-7 py-3 text-background transition hover:scale-[1.03]"
+						>
+							Enter typing test
+							<ArrowRight className="h-4 w-4" />
+						</Button>
+
+						<Button
+							asChild
+							variant="outline"
+							className="font-arcade flex items-center gap-2 rounded-full border border-foreground/20 px-6 py-3 text-[0.85rem] uppercase tracking-[0.2em]"
+						>
+							<a href="/game">Play typing game</a>
+						</Button>
+					</div>
 					<p className="text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">Press Enter to start · Esc to return here</p>
 				</div>
 			</main>
