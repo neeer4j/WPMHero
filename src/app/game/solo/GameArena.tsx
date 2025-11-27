@@ -26,6 +26,7 @@ export default function GameArena() {
   const [levelIndex, setLevelIndex] = useState(0);
   const [typed, setTyped] = useState("");
   const [score, setScore] = useState(0);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const wordPoolRef = useRef<string[]>([]);
 
@@ -133,26 +134,45 @@ export default function GameArena() {
     setScore(0);
     setTyped("");
     setRunning(true);
+    // focus the input so users can start typing immediately without clicking
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   const handleInputKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === " ") {
+    // Only handle keys when running
+    if (!running) return;
+
+    const key = e.key;
+
+    // Prevent space from scrolling the page; only use it for submitting words when focused
+    if (key === " ") {
+      e.preventDefault();
+    }
+
+    if (key === "Enter" || key === " ") {
       e.preventDefault();
       const value = typed.trim();
       if (!value) return;
 
-      // match the lowest (closest to bottom) word that equals typed
+      // find matching words equal to value and pick the one closest to bottom (largest y)
       setWords((list) => {
-        const index = list.findIndex((w) => w.text === value);
-        if (index >= 0) {
-          const removed = list[index];
+        let bestIndex = -1;
+        let bestY = -Infinity;
+        for (let i = 0; i < list.length; i++) {
+          if (list[i].text === value && list[i].y > bestY) {
+            bestY = list[i].y;
+            bestIndex = i;
+          }
+        }
+
+        if (bestIndex >= 0) {
           setScore((s) => s + 1);
-          // remove that word
           const copy = [...list];
-          copy.splice(index, 1);
+          copy.splice(bestIndex, 1);
           return copy;
         }
-        // no match: maybe penalize? for now, do nothing
+
+        // no exact match: do nothing for now
         return list;
       });
 
@@ -217,15 +237,36 @@ export default function GameArena() {
         </div>
 
         <div ref={containerRef} className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-foreground/10 bg-card/80 p-4">
-          {words.map((w) => (
-            <div
-              key={w.id}
-              style={{ left: `${w.x}%`, transform: `translateY(${w.y}px)`, position: 'absolute' }}
-              className="pointer-events-none rounded px-2 py-1 text-sm font-medium bg-background/90 text-foreground/90 shadow"
-            >
-              {w.text}
-            </div>
-          ))}
+          {words.map((w) => {
+            // determine if this is the best-match candidate for the current typed prefix
+            const typedPrefix = typed.trim();
+            const isMatchPrefix = typedPrefix.length > 0 && w.text.startsWith(typedPrefix);
+            // choose highest (closest-to-bottom) matching word to highlight
+            let highlight = false;
+            if (isMatchPrefix) {
+              // find the candidate with max y among words that startWith typedPrefix
+              const candidates = words.filter((c) => c.text.startsWith(typedPrefix));
+              const maxY = Math.max(...candidates.map((c) => c.y));
+              highlight = w.y === maxY;
+            }
+
+            return (
+              <div
+                key={w.id}
+                style={{ left: `${w.x}%`, transform: `translateY(${w.y}px)`, position: 'absolute' }}
+                className="pointer-events-none rounded px-2 py-1 text-sm font-medium bg-background/90 text-foreground/90 shadow"
+              >
+                {highlight && typedPrefix.length > 0 ? (
+                  <>
+                    <span className="text-emerald-400">{w.text.slice(0, typedPrefix.length)}</span>
+                    <span className="opacity-90">{w.text.slice(typedPrefix.length)}</span>
+                  </>
+                ) : (
+                  w.text
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-4 flex w-full items-center gap-3">
