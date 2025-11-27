@@ -1,12 +1,8 @@
-import dynamic from "next/dynamic";
-import { metadata as rootMetadata } from "../page";
+import GameArena from "./GameArena";
 
 export const metadata = {
   title: "Solo · WPMHero Game",
 };
-
-// Load client arena dynamically to keep this a server component page.
-const GameArena = dynamic(() => import("./GameArena"), { ssr: false });
 
 export default function SoloPage() {
   return (
