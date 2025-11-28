@@ -108,6 +108,8 @@ export function SupabaseHealthBanner() {
   // If still unknown or reachable, render nothing
   if (reachable === null || reachable === true) return null;
 
+  const probeUrl = env.NEXT_PUBLIC_SUPABASE_URL ? `${env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "")}/auth/v1/` : "(not set)";
+
   return (
     <div
       role="status"
@@ -118,8 +120,9 @@ export function SupabaseHealthBanner() {
         <div className="text-left">
           <div className="font-medium">Can't reach Supabase auth endpoint</div>
           <div className="text-xs opacity-90">
-            Authentication and result sync may be unavailable. Check your `NEXT_PUBLIC_SUPABASE_URL` and network/DNS.
+            Authentication and result sync may be unavailable. Check your <code className="rounded bg-white/10 px-1">NEXT_PUBLIC_SUPABASE_URL</code> and network/DNS.
           </div>
+          <div className="mt-1 text-xs opacity-90">Probing: <span className="font-mono">{probeUrl}</span></div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -131,14 +134,27 @@ export function SupabaseHealthBanner() {
           >
             {checking ? "Checking..." : "Retry"}
           </button>
-          <a
+          <button
+            onClick={() => {
+              try {
+                void navigator.clipboard.writeText(probeUrl);
+              } catch {}
+            }}
             className="text-xs underline"
-            href="/docs#supabase-setup"
-            rel="noopener noreferrer"
-            target="_blank"
+            aria-label="Copy probe URL"
           >
-            Setup docs
-          </a>
+            Copy URL
+          </button>
+          {env.NEXT_PUBLIC_SUPABASE_URL ? (
+            <a
+              className="text-xs underline"
+              href={env.NEXT_PUBLIC_SUPABASE_URL}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Open project URL
+            </a>
+          ) : null}
           <button onClick={handleDismiss} className="text-xs opacity-90" aria-label="Dismiss">
             Dismiss
           </button>
