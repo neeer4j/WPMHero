@@ -65,7 +65,7 @@ export function SupabaseHealthBanner() {
     }
   }, []);
 
-  // initial check
+  // initial checks
   useEffect(() => {
     let mounted = true;
     void (async () => {
