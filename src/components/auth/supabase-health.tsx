@@ -180,6 +180,12 @@ export function SupabaseHealthBanner() {
           </button>
         </div>
       </div>
+      {diag ? (
+        <div className="mx-auto mt-2 max-w-4xl rounded bg-white/5 p-2 text-left text-xs">
+          <div className="font-medium">Server probe result:</div>
+          <pre className="whitespace-pre-wrap break-words text-[11px] mt-1">{JSON.stringify(diag, null, 2)}</pre>
+        </div>
+      ) : null}
     </div>
   );
 }
