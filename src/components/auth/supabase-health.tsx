@@ -73,7 +73,26 @@ export function SupabaseHealthBanner() {
       if (!mounted) return;
       // do not auto-show if user recently dismissed
       if (dismissedRef.current) return;
-      await doCheck();
+
+      // First try a light client-side check. If that fails, also probe the server-side diagnostic
+      // endpoint because Vercel/server may have different DNS visibility.
+      const clientOk = await doCheck();
+      if (!clientOk) {
+        try {
+          const res = await fetch("/api/_diag/supabase");
+          const json = await res.json().catch(() => null);
+          setDiag(json);
+          if (res.ok && json?.ok) {
+            setReachable(true);
+            setAttempts(0);
+          } else {
+            setReachable(false);
+          }
+        } catch (err) {
+          setDiag({ ok: false, error: String(err) });
+          setReachable(false);
+        }
+      }
     })();
     return () => {
       mounted = false;
