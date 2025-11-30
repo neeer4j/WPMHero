@@ -10,6 +10,7 @@ export function SupabaseHealthBanner() {
   const [reachable, setReachable] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [diag, setDiag] = useState<any | null>(null);
   const dismissedRef = useRef<boolean>(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -93,8 +94,27 @@ export function SupabaseHealthBanner() {
   }, [checking, doCheck]);
 
   const handleRetry = async () => {
-    // exponential backoff attempts are handled by the attempts count; we still allow manual retry
-    await doCheck();
+    // Prefer server-side diagnostic since the server may have different DNS visibility.
+    setChecking(true);
+    setDiag(null);
+    try {
+      const res = await fetch("/api/_diag/supabase");
+      const json = await res.json().catch(() => null);
+      setDiag(json);
+      if (res.ok && json?.ok) {
+        setReachable(true);
+        setAttempts(0);
+      } else {
+        setReachable(false);
+        setAttempts((a) => a + 1);
+      }
+    } catch (err) {
+      setDiag({ ok: false, error: String(err) });
+      setReachable(false);
+      setAttempts((a) => a + 1);
+    } finally {
+      setChecking(false);
+    }
   };
 
   const handleDismiss = () => {
