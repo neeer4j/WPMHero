@@ -46,7 +46,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="dark bg-background text-foreground" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${pressStart.variable} antialiased`}>
+      <body
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} ${pressStart.variable} antialiased`}
+      >
         <AppProviders session={session}>{children}</AppProviders>
       </body>
     </html>
