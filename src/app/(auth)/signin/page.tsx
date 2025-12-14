@@ -18,7 +18,7 @@ export default async function SignInPage() {
       <Card>
         <CardHeader>
           <CardTitle>Sign in to WPMHero</CardTitle>
-          <CardDescription>Magic link authentication powered by Supabase.</CardDescription>
+          <CardDescription>Enter your email to receive a login code.</CardDescription>
         </CardHeader>
         <CardContent>
           {session ? (

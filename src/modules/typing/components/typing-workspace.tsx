@@ -247,12 +247,12 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
 
     return characters.map((char, index) => {
       const inputValue = inputs[index] ?? null;
-  const isCorrect = inputValue !== null && inputValue === char;
-  const isIncorrect = inputValue !== null && inputValue !== char;
-  const isCaret = caretPosition === index;
-  // When the user mistypes a letter, show the original/target character in red
-  // instead of the wrongly-typed character. This makes it clear what was expected.
-  const displayChar = inputValue !== null ? (isIncorrect ? char : inputValue) : char;
+      const isCorrect = inputValue !== null && inputValue === char;
+      const isIncorrect = inputValue !== null && inputValue !== char;
+      const isCaret = caretPosition === index;
+      // When the user mistypes a letter, show the original/target character in red
+      // instead of the wrongly-typed character. This makes it clear what was expected.
+      const displayChar = inputValue !== null ? (isIncorrect ? char : inputValue) : char;
 
       return (
         <span
@@ -381,7 +381,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
           </div>
         </div>
 
-  <div className="mt-3 flex w-full flex-wrap items-center gap-4 rounded-3xl border border-foreground/10 bg-card/60 px-5 py-2 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
+        <div className="mt-3 flex w-full flex-wrap items-center gap-4 rounded-3xl border border-foreground/10 bg-card/60 px-5 py-2 text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
           <div className="flex min-w-[12rem] items-center gap-3 text-foreground">
             <span className="font-arcade text-xs uppercase">Session Controls</span>
             <span className="hidden sm:inline text-muted-foreground">Adjust your drill in real time</span>
@@ -422,7 +422,7 @@ export const TypingWorkspace = ({ isAuthenticated, userEmail, userName, onExit, 
         </div>
       </header>
 
-  <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 overflow-hidden px-6 py-4">
+      <main className="flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 overflow-hidden px-6 py-4">
         <div className="w-full rounded-3xl border border-foreground/5 bg-card/70 px-6 py-7 shadow-xl backdrop-blur">
           <div
             ref={viewportRef}
